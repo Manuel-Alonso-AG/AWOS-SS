@@ -1,15 +1,26 @@
-import express, { Router } from "express";
+import { Router } from "express";
+import proyectosController from "../controllers/proyectos.controller.js";
+import { verificarToken, verificarRol } from "../middleware/auth.middleware.js";
 
-const routes: Router = express.Router();
+const router: Router = Router();
 
-routes.get("/");
+// Públicas
+router.get("/", (req, res) => proyectosController.listar(req as any, res));
+router.get("/areas", (req, res) => proyectosController.areas(req as any, res));
 
-routes.get("/areas");
+// IMPORTANTE: /mis-proyectos debe ir ANTES de /:id para evitar que Express
+// capture "mis-proyectos" como parámetro dinámico
+router.get(
+    "/mis-proyectos",
+    verificarToken,
+    verificarRol("institucion"),
+    (req, res) => proyectosController.misProyectos(req as any, res),
+);
 
-routes.get("/:id");
+router.get("/:id", (req, res) => proyectosController.detalle(req as any, res));
 
-routes.get("/mis-proyectos");
+router.post("/", verificarToken, verificarRol("institucion"), (req, res) =>
+    proyectosController.crear(req as any, res),
+);
 
-routes.post("/proyectos");
-
-export default routes;
+export default router;

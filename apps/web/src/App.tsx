@@ -1,121 +1,133 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { BrowserRouter, Routes, Route, Navigate, Link } from "react-router-dom";
+import { AuthProvider } from "@/providers/AuthProvider";
+import { useAuth } from "@/hooks/useAuth";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 
-function App() {
-  const [count, setCount] = useState(0)
+// Páginas públicas
+import { LoginPage } from "@/pages/LoginPage";
+import { RegistroEstudiantePage } from "@/pages/RegistroEstudiantePage";
+import { RegistroInstitucionPage } from "@/pages/RegistroInstitucionPage";
+import { DashboardPage } from "@/pages/DashboardPage";
 
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+// Páginas del estudiante
+import { ProyectosPage } from "@/pages/estudiante/ProyectosPage";
+import { DetalleProyectoPage } from "@/pages/estudiante/DetalleProyectoPage";
+import { MisPostulacionesPage } from "@/pages/estudiante/MisPostulacionesPage";
+import { KardexPage } from "@/pages/estudiante/KardexPage";
 
-      <div className="ticks"></div>
+// Páginas de la institución
+import { MisProyectosPage } from "@/pages/institucion/MisProyectosPage";
+import { PostulacionesProyectoPage } from "@/pages/institucion/PostulacionesProyectoPage";
+import { ValidarHorasPage } from "@/pages/institucion/ValidarHorasPage";
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+// ── Nav mínima — el equipo la reemplazará con su diseño ──────────────────────
+function Nav() {
+    const { usuario, logout } = useAuth();
+    if (!usuario) return null;
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+    const esEstudiante = usuario.rol === "estudiante";
+    const esInstitucion = usuario.rol === "institucion";
+
+    return (
+        <nav>
+            {esEstudiante && (
+                <>
+                    <Link to="/estudiante/proyectos">Proyectos</Link>
+                    {" | "}
+                    <Link to="/estudiante/postulaciones">
+                        Mis postulaciones
+                    </Link>
+                    {" | "}
+                    <Link to="/estudiante/kardex">Mi kardex</Link>
+                </>
+            )}
+            {esInstitucion && (
+                <>
+                    <Link to="/institucion/proyectos">Mis proyectos</Link>
+                    {" | "}
+                    <Link to="/institucion/horas">Validar horas</Link>
+                </>
+            )}
+            {" | "}
+            <button type="button" onClick={logout}>
+                Cerrar sesión ({usuario.matricula})
+            </button>
+        </nav>
+    );
 }
 
-export default App
+// ── Router ────────────────────────────────────────────────────────────────────
+function AppRoutes() {
+    return (
+        <>
+            <Nav />
+            <Routes>
+                {/* Públicas */}
+                <Route path="/login" element={<LoginPage />} />
+                <Route
+                    path="/registro/estudiante"
+                    element={<RegistroEstudiantePage />}
+                />
+                <Route
+                    path="/registro/institucion"
+                    element={<RegistroInstitucionPage />}
+                />
+
+                {/* Redirección raíz */}
+                <Route
+                    path="/"
+                    element={<Navigate to="/dashboard" replace />}
+                />
+                <Route path="/dashboard" element={<ProtectedRoute />}>
+                    <Route index element={<DashboardPage />} />
+                </Route>
+
+                {/* Rutas del estudiante */}
+                <Route element={<ProtectedRoute roles={["estudiante"]} />}>
+                    <Route
+                        path="/estudiante/proyectos"
+                        element={<ProyectosPage />}
+                    />
+                    <Route
+                        path="/estudiante/proyectos/:id"
+                        element={<DetalleProyectoPage />}
+                    />
+                    <Route
+                        path="/estudiante/postulaciones"
+                        element={<MisPostulacionesPage />}
+                    />
+                    <Route path="/estudiante/kardex" element={<KardexPage />} />
+                </Route>
+
+                {/* Rutas de la institución */}
+                <Route element={<ProtectedRoute roles={["institucion"]} />}>
+                    <Route
+                        path="/institucion/proyectos"
+                        element={<MisProyectosPage />}
+                    />
+                    <Route
+                        path="/institucion/proyectos/:id/postulaciones"
+                        element={<PostulacionesProyectoPage />}
+                    />
+                    <Route
+                        path="/institucion/horas"
+                        element={<ValidarHorasPage />}
+                    />
+                </Route>
+
+                {/* 404 */}
+                <Route path="*" element={<p>Página no encontrada.</p>} />
+            </Routes>
+        </>
+    );
+}
+
+export default function App() {
+    return (
+        <BrowserRouter>
+            <AuthProvider>
+                <AppRoutes />
+            </AuthProvider>
+        </BrowserRouter>
+    );
+}

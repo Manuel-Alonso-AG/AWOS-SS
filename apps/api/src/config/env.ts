@@ -1,21 +1,23 @@
-process.loadEnvFile();
+process.loadEnvFile?.();
 
 const {
-    PORT = 3000,
+    PORT = "3001",
     DB_HOST = "localhost",
     DB_USER = "root",
     DB_PASSWORD = "",
-    DB_NAME = "awoss_ss",
-    JWT_SECRET = "secret",
+    DB_NAME = "awos",
+    JWT_SECRET = "cambia_este_secreto_en_produccion",
     JWT_EXPIRES_IN = "24h",
-    GEOCODING_API = "https://maps.googleapis.com/maps/api/geocode/json",
+    GOOGLE_MAPS_API_KEY = "",
+    FRONTEND_URL = "http://localhost:5173",
 } = process.env;
 
-export const port: number = Number(PORT);
-export const dbHost: string = DB_HOST;
-export const dbUser: string = DB_USER;
-export const dbPassword: string = DB_PASSWORD;
-export const dbName: string = DB_NAME;
-export const jwtSecret: string = JWT_SECRET;
-export const jwtExpiresIn: string = JWT_EXPIRES_IN;
-export const geocodingAPI: string = GEOCODING_API;
+export const port = Number(PORT);
+export const dbHost = DB_HOST;
+export const dbUser = DB_USER;
+export const dbPassword = DB_PASSWORD;
+export const dbName = DB_NAME;
+export const jwtSecret = JWT_SECRET;
+export const jwtExpiresIn = JWT_EXPIRES_IN;
+export const mapsApiKey = GOOGLE_MAPS_API_KEY;
+export const frontendUrl = FRONTEND_URL;

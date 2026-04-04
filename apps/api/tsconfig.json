@@ -1,11 +1,12 @@
 {
-  "extends": "../../tsconfig.base.json",
-  "compilerOptions": {
-    "lib": ["es2024"],
-    "module": "es2022",
-    "moduleResolution": "bundler",
-    "outDir": "./dist",
-    "rootDir": "./src"
-  },
-  "include": ["src"]
+    "extends": "../../tsconfig.base.json",
+    "compilerOptions": {
+        "types": ["node"],
+        "lib": ["es2024"],
+        "module": "es2022",
+        "moduleResolution": "bundler",
+        "outDir": "./dist",
+        "rootDir": "./src"
+    },
+    "include": ["src"]
 }

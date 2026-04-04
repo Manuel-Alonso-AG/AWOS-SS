@@ -1,13 +1,28 @@
-import express, { Router } from "express";
+import { Router } from "express";
+import horasController from "../controllers/horas.controller.js";
+import { verificarToken, verificarRol } from "../middleware/auth.middleware.js";
 
-const routes: Router = express.Router();
+const router: Router = Router();
 
-routes.post("/");
+router.use(verificarToken);
 
-routes.patch("/:id/validar");
+router.post("/", verificarRol("estudiante"), (req, res) =>
+    horasController.registrar(req as any, res),
+);
 
-routes.get("/kardex/:matricula");
+// IMPORTANTE: rutas estáticas antes de las dinámicas
+router.get("/pendientes", verificarRol("institucion"), (req, res) =>
+    horasController.pendientes(req as any, res),
+);
 
-routes.get("/pendientes");
+router.get(
+    "/kardex/:matricula",
+    verificarRol("estudiante", "institucion", "administrador"),
+    (req, res) => horasController.kardex(req as any, res),
+);
 
-export default routes;
+router.patch("/:id/validar", verificarRol("institucion"), (req, res) =>
+    horasController.validar(req as any, res),
+);
+
+export default router;

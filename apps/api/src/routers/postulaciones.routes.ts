@@ -1,13 +1,26 @@
-import express, { Router } from "express";
+import { Router } from "express";
+import postulacionesController from "../controllers/postulaciones.controller.js";
+import { verificarToken, verificarRol } from "../middleware/auth.middleware.js";
 
-const routes: Router = express.Router();
+const router: Router = Router();
 
-routes.post("/");
+// Todas requieren autenticación
+router.use(verificarToken);
 
-routes.get("/mis");
+router.post("/", verificarRol("estudiante"), (req, res) =>
+    postulacionesController.postular(req as any, res),
+);
 
-routes.get("/proyecto/:id");
+router.get("/mis", verificarRol("estudiante"), (req, res) =>
+    postulacionesController.misPostulaciones(req as any, res),
+);
 
-routes.patch("/:id/responder");
+router.get("/proyecto/:id", verificarRol("institucion"), (req, res) =>
+    postulacionesController.postulacionesDeProyecto(req as any, res),
+);
 
-export default routes;
+router.patch("/:id/responder", verificarRol("institucion"), (req, res) =>
+    postulacionesController.responder(req as any, res),
+);
+
+export default router;

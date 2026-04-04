@@ -1,8 +1,10 @@
-DROP DATABASE IF EXISTS awos;
-CREATE DATABASE awos
-CHARACTER SET utf8mb4
-COLLATE utf8mb4_unicode_ci;
-USE awos;
+-- Uso de los siguientes comandos para usar en msyql
+-- DROP DATABASE IF EXISTS awos;
+-- CREATE DATABASE awos
+-- CHARACTER SET utf8mb4
+-- COLLATE utf8mb4_unicode_ci;
+-- USE awos;
+
 CREATE TABLE usuarios (
     id_usuario INT AUTO_INCREMENT PRIMARY KEY,
     matricula VARCHAR(20) UNIQUE NOT NULL,

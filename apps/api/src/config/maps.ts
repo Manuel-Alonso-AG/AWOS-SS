@@ -1,5 +1,5 @@
 import axios from "axios";
-import { geocodingAPI } from "./env";
+import { mapsApiKey } from "./env.js";
 
 interface Coordenadas {
     lat: number;
@@ -7,28 +7,40 @@ interface Coordenadas {
 }
 
 /**
- * Convierte una dirección de texto en coordenadas lat/lng
- * usando la Google Geocoding API (server-side).
+ * Geocodifica una dirección de texto a lat/lng usando la Google Geocoding API.
+ * Se ejecuta server-side al registrar instituciones y proyectos.
+ * Si no hay API key configurada, retorna null sin lanzar error.
  */
 export const geocodificar = async (
     direccion: string,
 ): Promise<Coordenadas | null> => {
+    if (!mapsApiKey) {
+        console.warn(
+            "[Maps] GOOGLE_MAPS_API_KEY no configurada — geocodificación omitida",
+        );
+        return null;
+    }
     try {
-        const url = "https://maps.googleapis.com/maps/api/geocode/json";
-        const { data } = await axios.get(url, {
-            params: { address: direccion, key: geocodingAPI },
-        });
-        if (data.status !== "OK") return null;
+        const { data } = await axios.get(
+            "https://maps.googleapis.com/maps/api/geocode/json",
+            {
+                params: { address: direccion, key: mapsApiKey },
+            },
+        );
+        if (data.status !== "OK") {
+            console.warn("[Maps] Geocoding falló:", data.status);
+            return null;
+        }
         return data.results[0].geometry.location as Coordenadas;
-    } catch {
-        console.error("[Maps] Error en Geocoding API");
+    } catch (err) {
+        console.error("[Maps] Error llamando a Geocoding API:", err);
         return null;
     }
 };
 
 /**
- * Fórmula de Haversine: calcula la distancia en km entre
- * dos puntos geográficos dados sus coordenadas lat/lng.
+ * Fórmula de Haversine: distancia en km entre dos puntos geográficos.
+ * Se ejecuta server-side en el endpoint GET /api/proyectos cuando se envían lat/lng.
  */
 export const distanciaKm = (
     lat1: number,
@@ -36,7 +48,7 @@ export const distanciaKm = (
     lat2: number,
     lng2: number,
 ): number => {
-    const R = 6371; // Radio de la Tierra en km
+    const R = 6371;
     const toRad = (deg: number) => (deg * Math.PI) / 180;
     const dLat = toRad(lat2 - lat1);
     const dLng = toRad(lng2 - lng1);

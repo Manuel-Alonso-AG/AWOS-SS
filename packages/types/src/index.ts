@@ -1,91 +1,118 @@
+// ─── Enums / Literales ────────────────────────────────────────────────────────
+
 export type Rol = "estudiante" | "institucion" | "administrador";
-
-export type EstatusPostulacion = "pendiente" | "aceptada" | "rechazada";
-
-export type EstatusProyecto = "activo" | "inactivo" | "completado";
-
+export type EstatusPostulacion =
+    | "pendiente"
+    | "aceptada"
+    | "rechazada"
+    | "cancelada";
+export type EstatusProyecto = "borrador" | "publicado" | "cerrado";
 export type Modalidad = "presencial" | "remoto" | "hibrido";
 
+// ─── Entidades (mapeo 1-1 con columnas SQL) ───────────────────────────────────
+
 export interface Usuario {
-    id: number;
+    id_usuario: number;
     matricula: string;
     email: string;
-    passwordHash: string;
+    password_hash: string;
     rol: Rol;
     activo: boolean;
 }
 
-export interface Areas {
-    id: number;
-    nombre: string;
-}
-
-export interface Instituciones {
-    id: number;
-    usuario: Usuario;
-    nombre: string;
+export interface Institucion {
+    id_institucion: number;
+    id_usuario: number;
+    nombre_legal: string;
     tipo: string;
     lat: number;
     lng: number;
 }
 
-export interface Postulaciones {
-    id: number;
-    usuario: Usuario;
-    cartaMotivacion: string;
-    estatus: EstatusPostulacion;
+export interface Area {
+    id_area: number;
+    nombre: string;
+    icono: string;
 }
 
-export interface Proyectos {
-    id: number;
-    institucion: Instituciones;
-    area: Areas;
+export interface Proyecto {
+    id_proyecto: number;
+    id_institucion: number;
+    id_area: number;
     titulo: string;
     modalidad: Modalidad;
-    horasRequeridas: number;
-    plazasTotales: number;
-    plazasOcupadas: number;
+    horas_requeridas: number;
+    plazas_total: number;
+    plazas_ocupadas: number;
     estatus: EstatusProyecto;
     lat: number;
     lng: number;
-    direccionProyecto: string;
+    direccion_proyecto: string;
 }
 
-export interface horasRegistro {
-    id: number;
-    idPostulacion: Postulaciones;
-    fechaActividad: Date;
+export interface Postulacion {
+    id_postulacion: number;
+    id_usuario: number;
+    id_proyecto: number;
+    carta_motivacion: string;
+    estatus: EstatusPostulacion;
+}
+
+export interface HorasRegistro {
+    id_registro: number;
+    id_postulacion: number;
+    fecha_actividad: string;
     horas: number;
     descripcion: string;
-    evidenciaUrl: string;
+    evidencia_url: string;
     validado: boolean;
-    validado_por: Usuario;
-    fechaValidacion: Date;
+    validado_por: number | null;
+    fecha_validacion: string | null;
+}
+
+// ─── Vistas SQL ───────────────────────────────────────────────────────────────
+
+export interface VistaProyectoMapa {
+    id_proyecto: number;
+    titulo: string;
+    institucion: string;
+    area: string;
+    modalidad: Modalidad;
+    horas_requeridas: number;
+    plazas_total: number;
+    plazas_ocupadas: number;
+    plazas_disponibles: number;
+    latitud: number;
+    longitud: number;
+    direccion_proyecto: string;
 }
 
 export interface VistaKardexSS {
-    idUsuario: number;
+    id_usuario: number;
     matricula: string;
     id_proyecto: number;
     titulo: string;
     institucion: string;
     area: string;
-    horasRequeridas: number;
+    horas_requeridas: number;
+    horas_registradas: number;
+    horas_validadas: number;
+    horas_pendientes: number;
+    porcentaje_avance: number;
 }
 
-export interface VistaProyectosMapa {
-    idProyecto: number;
-    titulo: string;
-    institucion: string;
-    area: string;
-    plazasTotal: number;
-    plazasOcupadas: number;
-    plazasDisponibles: number;
+// ─── JWT ──────────────────────────────────────────────────────────────────────
+
+export interface TokenPayload {
+    id_usuario: number;
+    rol: Rol;
 }
 
-export interface ApiResponse<T = any> {
-    data?: T;
+// ─── Respuesta estándar API ───────────────────────────────────────────────────
+
+export interface ApiResponse<T = unknown> {
     success: boolean;
     message: string;
+    data?: T;
     errors?: string[];
 }

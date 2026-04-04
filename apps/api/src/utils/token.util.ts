@@ -1,11 +1,7 @@
 import type { StringValue } from "ms";
 import jwt from "jsonwebtoken";
-import { jwtSecret, jwtExpiresIn } from "../config/env.ts";
-
-export interface TokenPayload {
-    idUsuario: number;
-    rol: "estudiante" | "institucion" | "administrador";
-}
+import { jwtSecret, jwtExpiresIn } from "../config/env.js";
+import type { TokenPayload } from "@awos-ss/types";
 
 export function generateToken(payload: TokenPayload): string {
     return jwt.sign(payload, jwtSecret, {
@@ -13,11 +9,10 @@ export function generateToken(payload: TokenPayload): string {
     });
 }
 
-export function decodeToken(token: string): TokenPayload | null {
+export function verifyToken(token: string): TokenPayload | null {
     try {
-        const decoded = jwt.verify(token, jwtSecret) as TokenPayload;
-        return decoded;
+        return jwt.verify(token, jwtSecret) as TokenPayload;
     } catch {
-        return null; // token inválido o expirado
+        return null;
     }
 }

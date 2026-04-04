@@ -1,43 +1,84 @@
 import bcrypt from "bcryptjs";
-import {
-    createUsuario,
-    findUsuarioByMatricula,
-} from "../repositories/user.repository";
-import type { Usuario, Rol } from "@awos-ss/types";
+import { usuarioRepository } from "../repositories/usuario.repository.ts";
+import { institucionRepository } from "../repositories/institucion.repository.ts";
+import { geocodificar } from "../config/maps.js";
+import type { Usuario } from "@awos-ss/types";
 
-export async function loginUsuario(
-    matricula: string,
-    password: string,
-): Promise<Usuario | null> {
-    const usuario = await findUsuarioByMatricula(matricula);
-    if (!usuario || !usuario.activo) return null;
+export const authService = {
+    /** Autentica al usuario; retorna el registro completo o null */
+    async login(matricula: string, password: string): Promise<Usuario | null> {
+        const usuario = await usuarioRepository.findByMatricula(matricula);
+        if (!usuario || !usuario.activo) return null;
+        const match = await bcrypt.compare(password, usuario.password_hash);
+        return match ? usuario : null;
+    },
 
-    const match = await bcrypt.compare(password, usuario.passwordHash);
+    /** Registra un estudiante; lanza error si la matrícula/email ya existe */
+    async registrarEstudiante(
+        matricula: string,
+        email: string,
+        password: string,
+    ): Promise<number> {
+        const existe = await usuarioRepository.findByMatricula(matricula);
+        if (existe) throw new Error("La matrícula ya está registrada");
 
-    if (!match) return null;
+        const password_hash = await bcrypt.hash(password, 12);
+        return usuarioRepository.create({
+            matricula,
+            email,
+            password_hash,
+            rol: "estudiante",
+            activo: true,
+        });
+    },
 
-    return usuario;
-}
+    /** Registra institución: crea usuario + perfil con geocodificación */
+    async registrarInstitucion(datos: {
+        matricula: string;
+        email: string;
+        password: string;
+        nombre_legal: string;
+        tipo: string;
+        direccion: string;
+    }): Promise<{ id_usuario: number; id_institucion: number }> {
+        const existe = await usuarioRepository.findByMatricula(datos.matricula);
+        if (existe) throw new Error("La matrícula ya está registrada");
 
-export async function registarUsuario(
-    matricula: string,
-    email: string,
-    password: string,
-    rol: Rol,
-): Promise<number | null> {
-    const exist = await findUsuarioByMatricula(matricula);
-    if (exist) return null;
+        // Geocodificar la dirección para obtener lat/lng
+        const coords = await geocodificar(datos.direccion);
+        if (!coords)
+            throw new Error(
+                "No se pudo geocodificar la dirección proporcionada",
+            );
 
-    const passwordHash = await bcrypt.hash(password, 12);
+        const password_hash = await bcrypt.hash(datos.password, 12);
 
-    const usuario: Usuario = {
-        id: 0,
-        matricula,
-        email,
-        passwordHash,
-        rol,
-        activo: true,
-    };
+        const id_usuario = await usuarioRepository.create({
+            matricula: datos.matricula,
+            email: datos.email,
+            password_hash,
+            rol: "institucion",
+            activo: true,
+        });
 
-    return await createUsuario(usuario);
-}
+        const id_institucion = await institucionRepository.create({
+            id_usuario,
+            nombre_legal: datos.nombre_legal,
+            tipo: datos.tipo,
+            lat: coords.lat,
+            lng: coords.lng,
+        });
+
+        return { id_usuario, id_institucion };
+    },
+
+    async getPerfil(
+        id_usuario: number,
+    ): Promise<Omit<Usuario, "password_hash"> | null> {
+        const usuario = await usuarioRepository.findById(id_usuario);
+        if (!usuario) return null;
+        // Nunca se devuelve el hash de la contraseña al cliente
+        const { password_hash: _, ...perfil } = usuario;
+        return perfil;
+    },
+};
