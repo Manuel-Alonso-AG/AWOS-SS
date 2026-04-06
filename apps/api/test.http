@@ -1,0 +1,194 @@
+# AWOS·SS — REST Client Test Suite
+# Instalar extensión "REST Client" de Huachao Mao en VS Code
+# Ejecutar en orden de arriba hacia abajo
+# Variables: copiar el token del response de login y pegarlo en @tokenEstudiante / @tokenInstitucion
+
+@base = http://localhost:3001/api
+@tokenEstudiante = PEGAR_TOKEN_ESTUDIANTE_AQUI
+@tokenInstitucion = PEGAR_TOKEN_INSTITUCION_AQUI
+
+# ─────────────────────────────────────────────────────────────────────────────
+### CA-01: Health check
+GET {{base}}/health
+
+# ─────────────────────────────────────────────────────────────────────────────
+### CA-02a: Registro de estudiante
+POST {{base}}/auth/registro/estudiante
+Content-Type: application/json
+
+{
+  "matricula": "EST001",
+  "email": "estudiante@upemor.edu.mx",
+  "password": "Password123!"
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+### CA-02b: Login de estudiante (copiar token → @tokenEstudiante)
+POST {{base}}/auth/login
+Content-Type: application/json
+
+{
+  "matricula": "EST001",
+  "password": "Password123!"
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+### CA-02c: Perfil del estudiante autenticado
+GET {{base}}/auth/perfil
+Authorization: Bearer {{tokenEstudiante}}
+
+# ─────────────────────────────────────────────────────────────────────────────
+### CA-03: Registro de institución (con geocodificación automática)
+POST {{base}}/auth/registro/institucion
+Content-Type: application/json
+
+{
+  "matricula": "INST001",
+  "email": "hospital@example.mx",
+  "password": "Password123!",
+  "nombre_legal": "Hospital General de Cuernavaca",
+  "tipo": "publica",
+  "direccion": "Av. Domingo Diez 1001, Cuernavaca, Morelos, México"
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+### Login de institución (copiar token → @tokenInstitucion)
+POST {{base}}/auth/login
+Content-Type: application/json
+
+{
+  "matricula": "INST001",
+  "password": "Password123!"
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+### Obtener catálogo de áreas (sin auth)
+GET {{base}}/proyectos/areas
+
+# ─────────────────────────────────────────────────────────────────────────────
+### CA-04 + Crear proyecto (institución)
+POST {{base}}/proyectos
+Content-Type: application/json
+Authorization: Bearer {{tokenInstitucion}}
+
+{
+  "id_area": 1,
+  "titulo": "Desarrollo de sistema de expedientes",
+  "modalidad": "hibrido",
+  "horas_requeridas": 480,
+  "plazas_total": 3,
+  "direccion_proyecto": "Av. Domingo Diez 1001, Cuernavaca, Morelos, México",
+  "estatus": "publicado"
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+### CA-04: GET proyectos publicados (sin coordenadas)
+GET {{base}}/proyectos
+
+# ─────────────────────────────────────────────────────────────────────────────
+### CA-05: GET proyectos con filtro por distancia (Haversine server-side)
+GET {{base}}/proyectos?lat=18.9187&lng=-99.2342&radio=10
+
+# ─────────────────────────────────────────────────────────────────────────────
+### Mis proyectos (institución)
+GET {{base}}/proyectos/mis-proyectos
+Authorization: Bearer {{tokenInstitucion}}
+
+# ─────────────────────────────────────────────────────────────────────────────
+### Detalle de proyecto
+GET {{base}}/proyectos/1
+
+# ─────────────────────────────────────────────────────────────────────────────
+### CA-07: Postularse a proyecto (estudiante)
+POST {{base}}/postulaciones
+Content-Type: application/json
+Authorization: Bearer {{tokenEstudiante}}
+
+{
+  "id_proyecto": 1,
+  "carta_motivacion": "Estoy muy interesado en este proyecto porque me permite aplicar mis conocimientos en desarrollo de software para mejorar los servicios de salud de la comunidad."
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+### CA-07: Intento de doble postulación (debe retornar 409)
+POST {{base}}/postulaciones
+Content-Type: application/json
+Authorization: Bearer {{tokenEstudiante}}
+
+{
+  "id_proyecto": 1,
+  "carta_motivacion": "Intento duplicado"
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+### Mis postulaciones (estudiante)
+GET {{base}}/postulaciones/mis
+Authorization: Bearer {{tokenEstudiante}}
+
+# ─────────────────────────────────────────────────────────────────────────────
+### Postulaciones del proyecto (institución)
+GET {{base}}/postulaciones/proyecto/1
+Authorization: Bearer {{tokenInstitucion}}
+
+# ─────────────────────────────────────────────────────────────────────────────
+### CA-08: Aceptar postulación (institución) — plazas_ocupadas se incrementa
+PATCH {{base}}/postulaciones/1/responder
+Content-Type: application/json
+Authorization: Bearer {{tokenInstitucion}}
+
+{
+  "estatus": "aceptada"
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+### CA-09: Registrar horas (estudiante con postulación aceptada)
+POST {{base}}/horas
+Content-Type: application/json
+Authorization: Bearer {{tokenEstudiante}}
+
+{
+  "id_postulacion": 1,
+  "fecha_actividad": "2026-04-03",
+  "horas": 4,
+  "descripcion": "Levantamiento de requerimientos con el equipo de TI del hospital",
+  "evidencia_url": "https://drive.google.com/file/ejemplo"
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+### Horas pendientes de validar (institución)
+GET {{base}}/horas/pendientes
+Authorization: Bearer {{tokenInstitucion}}
+
+# ─────────────────────────────────────────────────────────────────────────────
+### CA-10: Validar horas (institución)
+PATCH {{base}}/horas/1/validar
+Content-Type: application/json
+Authorization: Bearer {{tokenInstitucion}}
+
+{
+  "validado": true
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+### CA-10: Kardex del estudiante (porcentaje_avance actualizado)
+GET {{base}}/horas/kardex/EST001
+Authorization: Bearer {{tokenEstudiante}}
+
+# ─────────────────────────────────────────────────────────────────────────────
+### CA-11: Estudiante intenta ver kardex de otra matrícula (debe retornar 403)
+GET {{base}}/horas/kardex/INST001
+Authorization: Bearer {{tokenEstudiante}}
+
+# ─────────────────────────────────────────────────────────────────────────────
+### CA-12a: Endpoint protegido sin token (debe retornar 401)
+GET {{base}}/auth/perfil
+
+# ─────────────────────────────────────────────────────────────────────────────
+### CA-12b: Estudiante intenta crear proyecto (debe retornar 403)
+POST {{base}}/proyectos
+Content-Type: application/json
+Authorization: Bearer {{tokenEstudiante}}
+
+{
+  "titulo": "Intento no autorizado"
+}
