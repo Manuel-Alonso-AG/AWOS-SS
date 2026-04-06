@@ -23,6 +23,7 @@ import { KardexPage } from "@/pages/estudiante/KardexPage";
 import { MisProyectosPage } from "@/pages/institucion/MisProyectosPage";
 import { PostulacionesProyectoPage } from "@/pages/institucion/PostulacionesProyectoPage";
 import { ValidarHorasPage } from "@/pages/institucion/ValidarHorasPage";
+import { PostulacionesOverviewPage } from "@/pages/institucion/PostulacionesOverviewPage";
 
 // ── Icons (inline SVG) ───────────────────────────────────────────────────────
 const IconMap = () => (
@@ -284,6 +285,10 @@ function AppRoutes() {
                                 <Route
                                     path="/institucion/horas"
                                     element={<ValidarHorasPage />}
+                                />
+                                <Route
+                                    path="/institucion/postulaciones-overview"
+                                    element={<PostulacionesOverviewPage />}
                                 />
                             </Route>
                             <Route
